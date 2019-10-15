@@ -11,13 +11,11 @@ module Enumerable
 
   def my_map(&proc)
     temp = []
-    if proc || block_given?
-      (0..length - 1).each do |i|
-        temp << [proc.call(self[i])] if proc
-        temp << yield(self[i]) if block_given? && !proc
-      end
-    else temp = self
+    (0..length - 1).each do |i|
+      temp << [proc.call(self[i])] if proc
+      temp << yield(self[i]) if block_given? && !proc
     end
+    temp = self if temp.empty?
     temp
   end
 
@@ -40,56 +38,60 @@ module Enumerable
   end
 
   def my_any?(param = true)
-    if block_given?
-      each { |item| return true if yield(item) }
-    elsif param.is_a? Regexp
-      each { |item| return true if param.match(item) }
-    elsif param.is_a? Class
-      each { |item| return true if item.instance_of? param }
-    else
-      each { |item| return true if item == param }
-    end
-    false
+    each { |item| return true if yield(item) } if block_given?
+    state = case param
+            when Regexp then check_regexp(true, param)
+            when Class then check_class(true, param)
+            else check(true, param)
+            end
+    state == true ? state : false
   end
 
   def my_all?(param = true)
-    if block_given?
-      each { |item| return false unless yield(item) }
-    elsif param.is_a? Regexp
-      each { |item| return false unless param.match(item) }
-    elsif param.is_a? Class
-      each { |item| return false unless item.instance_of? param }
-    else
-      each { |item| return false unless item == param }
-    end
-    true
+    each { |item| return false unless yield(item) } if block_given?
+    state = case param
+            when Regexp then check_regexp(false, param, true)
+            when Class then check_class(false, param, true)
+            else check(false, param, true)
+            end
+    state == false ? state : true
   end
 
   def my_none?(param = true)
-    if block_given?
-      each { |item| return false if yield(item) }
-    elsif param.is_a? Regexp
-      each { |item| return false if param.match(item) }
-    elsif param.is_a? Class
-      each { |item| return false if item.instance_of? param }
-    else
-      each { |item| return false if item == param }
-    end
-    true
+    each { |item| return false if yield(item) } if block_given?
+    state = case param
+            when Regexp then check_regexp(false, param)
+            when Class then check_class(false, param)
+            else check(false, param)
+            end
+    state == false ? state : true
+  end
+
+  def check_regexp(status, param, negative = false)
+    each { |item| return status unless param.match(item) } if negative
+    each { |item| return status if param.match(item) } unless negative
+  end
+
+  def check_class(status, param, negative = false)
+    each { |item| return status unless item.instance_of? param } if negative
+    each { |item| return status if item.instance_of? param } unless negative
+  end
+
+  def check(status, param, negative = false)
+    each { |item| return status unless item == param } if negative
+    each { |item| return status if item == param } unless negative
   end
 
   def my_count(cond = nil)
     counter = 0
     each do |item|
-      counter += 1 if (block_given? && yield(item)) || (item == cond) || !cond
+      counter += 1 if (block_given? && yield(item)) || (item == cond) || (!cond && !block_given?)
     end
     counter
   end
 
   def my_inject(*args)
-    acc = 0
-    acc = args[0] if !args[0].is_a?(Symbol) && !args.empty?
-
+    acc = setup_acc(args)
     return multiply_els(self) if args.include? :*
 
     return add_els(self) if args.include? :+
@@ -98,11 +100,12 @@ module Enumerable
 
     return subs_els(self) if args.include? :-
 
-
-    each do |item|
-      acc = yield(acc, item)
-    end
+    each { |item| acc = yield(acc, item) }
     acc
+  end
+
+  def setup_acc(param)
+    !param[0].is_a?(Symbol) && !param.empty? ? param[0] : 0
   end
 
   def multiply_els(arr)
@@ -122,16 +125,14 @@ module Enumerable
   end
 end
 
-
-
 # puts [1,2,3].my_all?{ |item| item<0}
-# puts %w[s str string].my_any?(/c/)
-# puts [1,2,3].my_none?{ |item| item==3}
+# puts %w[s str string].my_none?(/g/)
+# puts [1,2,3].my_none?{ |item| item<0}
 # puts [false, false, false].my_none?
 
-# puts [true,true,2].my_map
+# puts [1,2,2].my_map { |item| item+2}
 
-# puts([1, 2, 2].my_count { |item| item==2 })
+# puts([1, 2, 2].my_count(1))
 
 # puts multiply_els([3, 2, 3])
 
@@ -146,7 +147,7 @@ end
 # puts [1,2,3,4].my_select{ |item| item.even?}
 # [1,2,3].my_each { |item| puts item }
 
-# puts [3,2,3].my_inject(:/)
+# puts [3,2,3].my_inject(2) { |acc, item| acc+item}
 
 # class Foo
 #
