@@ -148,4 +148,3 @@ module Enumerable # rubocop:disable Metrics/ModuleLength
     arr.my_inject(accum) { |acc, item| acc - item }
   end
 end
-
