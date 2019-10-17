@@ -125,8 +125,8 @@ module Enumerable # rubocop:disable Metrics/ModuleLength
   def setup_acc(param)
     if !param[0].is_a?(Symbol) && !param.empty?
       param[0]
-    elsif param.my_all?(String) && param[0].is_a?(String) then param[0]
-    elsif param.my_all?(String) then ''
+    elsif param[0].is_a?(String) then param[0]
+    elsif my_all?(String) then ''
     else 0
     end
   end
@@ -148,3 +148,4 @@ module Enumerable # rubocop:disable Metrics/ModuleLength
     arr.my_inject(accum) { |acc, item| acc - item }
   end
 end
+
