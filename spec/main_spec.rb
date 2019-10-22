@@ -26,7 +26,9 @@ describe Enumerable do
     end
     context 'If block is given' do
       it 'Return each element with index in an array' do
-        expect(array2.my_each_with_index { |item, i| "#{item}: #{i}" }).to eql(0..1)
+        arr = []
+        array1.my_each_with_index { |x, i| arr[i] = x.to_i }
+        expect(arr).to eql([1, 2, 3, 4, 5])
       end
     end
   end

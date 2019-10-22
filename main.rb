@@ -20,14 +20,17 @@ module Enumerable # rubocop:disable Metrics/ModuleLength
   end
 
   def my_each_with_index
-    return to_enum unless block_given?
-
-    (0..length - 1).each do |i|
-      yield(self[i], i)
+    if block_given?
+      i = 0
+      while self[i]
+        yield(self[i], i)
+        i += 1
+      end
+      self
+    else
+      to_enum(:my_each_with_index)
     end
   end
-
-  [1, 2, 3].my_each_with_index { |item, i| puts "#{item}: #{i}" }
 
   def my_select
     return to_enum unless block_given?
