@@ -27,6 +27,8 @@ module Enumerable # rubocop:disable Metrics/ModuleLength
     end
   end
 
+  [1, 2, 3].my_each_with_index { |item, i| puts "#{item}: #{i}" }
+
   def my_select
     return to_enum unless block_given?
 
